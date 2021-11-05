@@ -14,6 +14,10 @@ import org.junit.jupiter.api.Test;
 
 import com.sun.net.httpserver.HttpServer;
 
+/**
+ * {@link HttpURLConnection} sometimes fails on POST operations to a http URL.
+ * @see <a href="https://stackoverflow.com/questions/69837711/httpurlconnection-failing-on-post-with-http-400/69837712">Stackoverflow</a>
+ */
 public class HttpUrlConnectionTest {
     private HttpServer server;
 
@@ -57,6 +61,12 @@ public class HttpUrlConnectionTest {
             connection.setRequestProperty("Content-Length", Integer.toString(content.length));
             connection.getOutputStream().write(content);
             connection.connect();
+
+            // Fully consuming and closing the input stream here makes this test pass.
+            // However, this is besides the point as the purpose of this test setup is only to
+            // provoke closing the socket such that we enter the if branch here: https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/sun/net/www/protocol/http/HttpURLConnection.java#L748
+            // There are surely other reasons for the socket to get closed. E.g. timeouts and such.
+
             Assertions.assertEquals(connection.getResponseCode(), 200, "failed after " + k + " iterations.");
         }
     }
